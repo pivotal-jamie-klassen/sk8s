@@ -1,0 +1,35 @@
+resource_types:
+- name: pull-request
+  type: docker-image
+  source:
+    repository: jtarchie/pr
+resources:
+- name: sk8s
+  type: pull-request
+  source:
+    access_token: ((access_token))
+    repo: markfisher/sk8s
+    base: master
+- name: kubernetes-model
+  type: git
+  source: 
+    uri: https://github.com/ericbottard/kubernetes-model
+    branch: sk8s
+jobs:
+- name: test
+  plan:
+  - get: sk8s
+    trigger: true
+  - get: kubernetes-model
+  - task: run-tests
+    file: sk8s/ci/tasks/test.yml
+    on_success:
+      put: sk8s
+      params:
+        path: sk8s
+        status: success
+    on_failure:
+      put: sk8s
+      params:
+        path: sk8s
+        status: failure
